@@ -4,6 +4,9 @@ const userRoutes = require('./routes/UserRoutes');
 const adminRoutes = require('./routes/AdminRoutes')
 const schoolRoutes = require('./routes/SchoolRoutes')
 const studentRoutes = require('./routes/StudentRoutes')
+const sectionRoutes = require('./routes/SectionRoutes')
+const branchRoutes = require('./routes/BranchRoutes')
+const classRoutes = require('./routes/ClassRoutes')
 
 const app = express();
 const port = 3000;
@@ -26,6 +29,9 @@ app.use('/api', userRoutes);
 app.use('/admin', adminRoutes)
 app.use('/school',schoolRoutes)
 app.use('/student',studentRoutes)
+app.use('/section',sectionRoutes)
+app.use('/branch',branchRoutes)
+app.use('/class',classRoutes)
 
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);

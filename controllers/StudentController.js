@@ -81,6 +81,11 @@ exports.getAllStudent = async (req, res) => {
                     createdAt: 1,
                     updatedAt: 1
                 }
+            },
+            {
+                $sort: {
+                    createdAt: -1
+                }
             }
         ])
         res.status(200).json({
