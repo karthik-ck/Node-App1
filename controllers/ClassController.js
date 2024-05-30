@@ -35,6 +35,11 @@ exports.addClass = async (req, res) => {
             data: result
         })
     } catch (error) {
+        if (error.code === 11000) {
+            const field = Object.keys(error.keyValue)[0];
+            const message = `${field} already Exist.`;
+            return res.status(400).json({ message });
+        }
         res.status(500).json({ message: error.message })
     }
 }
@@ -174,6 +179,10 @@ exports.updateClass = async (req, res) => {
             return [];
         };
 
+        const validateObjectIds = (array) => {
+            return array.filter(id => mongoose.Types.ObjectId.isValid(id)).map(id => new mongoose.Types.ObjectId(id));
+        };
+
         const existingClass = await Class.findById(classId)
         if (!existingClass) {
             return res.status(404).json({ message: 'Class Not Found..!' })
@@ -186,17 +195,22 @@ exports.updateClass = async (req, res) => {
         }
 
         if (updateData.section) {
-            updateData.section = parseJsonArray(updateData.section);
+            //updateData.section = parseJsonArray(updateData.section);
+            const newSections = parseJsonArray(updateData.section);
+            const validNewSections = validateObjectIds(newSections);
+            updateData.section = [...new Set([...existingClass.section, ...validNewSections])]; // Merge and remove duplicates
         } else {
             updateData.section = existingClass.section
         }
 
         if (updateData.branch) {
-            updateData.branch = parseJsonArray(updateData.branch);
+            //updateData.branch = parseJsonArray(updateData.branch);
+            const newBranches = parseJsonArray(updateData.branch);
+            const validNewBranches = validateObjectIds(newBranches);
+            updateData.branch = [...new Set([...existingClass.branch, ...validNewBranches])]; // Merge and remove duplicates
         } else {
             updateData.branch = existingClass.branch
         }
-
 
         const updateClass = await Class.findByIdAndUpdate(classId, updateData, { new: true, runValidators: true })
         return res.status(200).json({
@@ -204,6 +218,22 @@ exports.updateClass = async (req, res) => {
             updateClass
         })
 
+    } catch (error) {
+        return res.status(500).json({ message: error.message })
+    }
+}
+
+exports.deleteClass = async (req, res) => {
+    try {
+        const classId = req.params.id
+        if (classId.length > 24) {
+            return res.status(400).json({ message: 'Invalid Id.' })
+        }
+        const classes = await Class.deleteOne({ _id: classId })
+        if (classes.deletedCount === 0) {
+            return res.status(404).json({ message: 'No Class Found.' })
+        }
+        return res.status(200).json({ message: 'Class Deleted Successfully.' })
     } catch (error) {
         return res.status(500).json({ message: error.message })
     }

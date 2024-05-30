@@ -19,7 +19,7 @@ exports.createAdmin = async (req, res) => {
 exports.getAllAdmin = async (req, res) => {
     try {
         //const user = await Admin.find()
-        const page = parseInt(req.query.page)
+        const page = parseInt(req.query.page) || 1
         const limit = parseInt(5)
         const skip = (page - 1) * limit
         const searchQuery = req.query.search || ''

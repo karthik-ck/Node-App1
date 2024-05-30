@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
 
+const ObjectId = mongoose.Schema.ObjectId
 const classSchema = new mongoose.Schema({
     class_name: {
         type: String,
@@ -7,12 +8,12 @@ const classSchema = new mongoose.Schema({
         unique: true
     },
     section: [{
-        type: mongoose.Schema.Types.ObjectId,
+        type: ObjectId,
         ref: 'Section',
         required: true
     }],
     branch:[{
-        type:mongoose.Schema.Types.ObjectId,
+        type: ObjectId,
         res:'Branch'
     }]
 }, { timestamps: true })

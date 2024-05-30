@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const bcrypt = require('bcryptjs');
 
 const adminSchema = new mongoose.Schema({
     username: {
@@ -18,6 +19,20 @@ const adminSchema = new mongoose.Schema({
 }, { timestamps: true }
 )
 
-const Admin = mongoose.model('Admin', adminSchema)
+// Hash password before saving the admin
+adminSchema.pre('save', async function (next) {
+    if (!this.isModified('password')) {
+        return next();
+    }
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+});
 
+// Compare entered password with hashed password
+adminSchema.methods.matchPassword = async function (enteredPassword) {
+    return await bcrypt.compare(enteredPassword, this.password);
+};
+
+const Admin = mongoose.model('Admin', adminSchema)
 module.exports = Admin
