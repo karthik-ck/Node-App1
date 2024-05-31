@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const protect = require('./middleware/auth')
 const userRoutes = require('./routes/UserRoutes');
 const adminRoutes = require('./routes/AdminRoutes')
 const schoolRoutes = require('./routes/SchoolRoutes')
@@ -9,7 +10,9 @@ const sectionRoutes = require('./routes/SectionRoutes')
 const branchRoutes = require('./routes/BranchRoutes')
 const classRoutes = require('./routes/ClassRoutes')
 const authRoutes = require('./routes/AuthRoutes')
-const protect = require('./middleware/auth')
+const customerRoutes = require('./routes/CustomerRoutes')
+const partyRoutes = require('./routes/PartyRoutes')
+const subjectRoutes = require('./routes/SubjectRoutes')
 
 dotenv.config();
 
@@ -39,6 +42,9 @@ app.use('/student',studentRoutes)
 app.use('/section',sectionRoutes)
 app.use('/branch',branchRoutes)
 app.use('/class',classRoutes)
+app.use('/customer',customerRoutes)
+app.use('/party',partyRoutes)
+app.use('/subject',subjectRoutes)
 
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
