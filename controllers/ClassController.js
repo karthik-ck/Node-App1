@@ -5,7 +5,7 @@ const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
 exports.addClass = async (req, res) => {
     try {
-        const { class_name, section, branch } = req.body
+        const { class_name, section, branch, subject } = req.body
 
         const parseJsonArray = (str) => {
             if (typeof str === 'string' && str.trim() !== '') {
@@ -20,14 +20,17 @@ exports.addClass = async (req, res) => {
 
         const sectionsArray = parseJsonArray(section);
         const branchesArray = parseJsonArray(branch);
+        const subjectArray = parseJsonArray(subject)
 
         const validSections = sectionsArray.filter(isValidObjectId).map(id => new mongoose.Types.ObjectId(id));
         const validBranches = branchesArray.filter(isValidObjectId).map(id => new mongoose.Types.ObjectId(id));
+        const validSubjects = subjectArray.filter(isValidObjectId).map(id => new mongoose.Types.ObjectId(id));
 
         const classes = new Class({
             class_name,
             section: validSections,
-            branch: validBranches
+            branch: validBranches,
+            subject: validSubjects
         })
         const result = await classes.save()
         res.status(200).json({
@@ -81,6 +84,19 @@ exports.getAllClass = async (req, res) => {
                     }]
                 }
             },
+            {
+                $lookup: {
+                    from: 'subjects',
+                    localField: 'subject',
+                    foreignField: '_id',
+                    as: 'subjectData',
+                    pipeline: [{
+                        $project: {
+                            subject_name: 1
+                        }
+                    }]
+                }
+            },
             { $skip: skip },
             { $limit: limit },
             {
@@ -88,6 +104,7 @@ exports.getAllClass = async (req, res) => {
                     class_name: 1,
                     sectionData: 1,
                     branchData: 1,
+                    subjectData: 1,
                     createdAt: 1
                 }
             },
@@ -145,10 +162,24 @@ exports.getClassbyId = async (req, res) => {
                 }
             },
             {
+                $lookup: {
+                    from: 'subjects',
+                    localField: 'subject',
+                    foreignField: '_id',
+                    as: 'subjectData',
+                    pipeline: [{
+                        $project: {
+                            subject_name: 1
+                        }
+                    }]
+                }
+            },
+            {
                 $project: {
                     class_name: 1,
                     sectionData: 1,
-                    branchData: 1
+                    branchData: 1,
+                    subjectData: 1
                 }
             }
         ])
@@ -190,7 +221,7 @@ exports.updateClass = async (req, res) => {
         if (updateData.class_name && updateData.class_name !== existingClass.class_name) {
             const classExist = await Class.findOne({ class_name: updateData.class_name })
             if (classExist) {
-                res.status(400).json({ message: 'Class Already Exist.' })
+                return res.status(400).json({ message: 'Class Already Exist.' })
             }
         }
 
@@ -210,6 +241,14 @@ exports.updateClass = async (req, res) => {
             updateData.branch = [...new Set([...existingClass.branch, ...validNewBranches])]; // Merge and remove duplicates
         } else {
             updateData.branch = existingClass.branch
+        }
+
+        if (updateData.subject) {
+            const newSubjects = parseJsonArray(updateData.subject)
+            const validNewSubjects = validateObjectIds(newSubjects)
+            updateData.subject = [...new Set([...existingClass.subject, ...validNewSubjects])]
+        } else {
+            updateData.subject = existingClass.subject
         }
 
         const updateClass = await Class.findByIdAndUpdate(classId, updateData, { new: true, runValidators: true })

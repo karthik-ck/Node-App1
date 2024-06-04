@@ -15,6 +15,11 @@ const classSchema = new mongoose.Schema({
     branch:[{
         type: ObjectId,
         res:'Branch'
+    }],
+    subject:[{
+        type:ObjectId,
+        ref:'Subject',
+        required: true
     }]
 }, { timestamps: true })
 

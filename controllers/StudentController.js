@@ -4,7 +4,7 @@ const mongoose = require('mongoose')
 
 exports.createStudent = async (req, res) => {
     try {
-        const { name, address, phone } = req.body
+        const { name, address, phone, class_id, section_id } = req.body
         const profile_image = req.file ? req.file.filename : null
         const getSchoolData = await School.find()
         let school_id = ""
@@ -13,7 +13,8 @@ exports.createStudent = async (req, res) => {
         } else {
             school_id = ""
         }
-        const user = new Student({ name, address, phone, profile_image, school_id })
+        const branch_id = req.body.branch_id ? req.body.branch_id : null
+        const user = new Student({ name, address, phone, profile_image, school_id, class_id, section_id, branch_id })
         const result = await user.save()
         res.status(200).json({ message: "Student Added Successfully..!" })
     } catch (error) {
@@ -61,11 +62,56 @@ exports.getAllStudent = async (req, res) => {
                 }
             },
             {
-                $unwind: "$school_details"
+                $lookup: {
+                    from: 'classes',
+                    localField: 'class_id',
+                    foreignField: '_id',
+                    as: 'class_name'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'sections',
+                    localField: 'section_id',
+                    foreignField: '_id',
+                    as: 'section_name'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'branches',
+                    localField: 'branch_id',
+                    foreignField: '_id',
+                    as: 'branch_name'
+                }
+            },
+            {
+                $unwind: "$school_details",
+            },
+            {
+                $unwind: {
+                    path: '$class_name',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $unwind: {
+                    path: '$section_name',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $unwind: {
+                    path: '$branch_name',
+                    preserveNullAndEmptyArrays: true
+                }
             },
             {
                 $addFields: {
-                    school_name: "$school_details.school_name"
+                    school_name: "$school_details.school_name",
+                    class_name: '$class_name.class_name',
+                    section_name: '$section_name.section_name',
+                    branch_name: '$branch_name.branch_name'
                 }
             },
             { $skip: skip },
@@ -78,6 +124,9 @@ exports.getAllStudent = async (req, res) => {
                     profile_image: 1,
                     school_details: 1,
                     school_name: 1,
+                    class_name: 1,
+                    section_name: 1,
+                    branch_name: 1,
                     createdAt: 1,
                     updatedAt: 1
                 }
@@ -124,13 +173,52 @@ exports.getStudentbyId = async (req, res) => {
                 }
             },
             {
+                $lookup: {
+                    from: 'classes',
+                    localField: 'class_id',
+                    foreignField: '_id',
+                    as: 'class_name'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'sections',
+                    localField: 'section_id',
+                    foreignField: '_id',
+                    as: 'section_name'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'branches',
+                    localField: 'branch_id',
+                    foreignField: '_id',
+                    as: 'branch_name'
+                }
+            },
+            {
                 $unwind: '$school_details'
+            },
+            {
+                $unwind: '$class_name',
+            },
+            {
+                $unwind: '$section_name'
+            },
+            {
+                $unwind: {
+                    path: '$branch_name',
+                    preserveNullAndEmptyArrays: true
+                }
             },
             {
                 $addFields: {
                     school_name: '$school_details.school_name',
                     school_address: '$school_details.school_address',
-                    school_logo: '$school_details.school_logo'
+                    school_logo: '$school_details.school_logo',
+                    class_name: '$class_name.class_name',
+                    section_name: '$section_name.section_name',
+                    branch_name: '$branch_name.branch_name'
                 }
             },
             {
@@ -141,7 +229,10 @@ exports.getStudentbyId = async (req, res) => {
                     profile_image: 1,
                     school_name: 1,
                     school_address: 1,
-                    school_logo: 1
+                    school_logo: 1,
+                    class_name: 1,
+                    section_name: 1,
+                    branch_name: 1,
                 }
             }
         ])
@@ -165,6 +256,13 @@ exports.updateStudent = async (req, res) => {
         } else {
             delete updateData.profile_image
         }
+
+        if (updateData.branch_id) {
+            updateData.branch_id
+        } else {
+            updateData.branch_id = null
+        }
+
         const existingUser = await Student.findById(studentId)
         if (!existingUser) {
             return res.status(404).json({ message: 'Student Not Found..!' })

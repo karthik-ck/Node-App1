@@ -12,7 +12,7 @@ exports.register = async (req, res) => {
         const user = new Login({ name, email, password })
         const result = await user.save()
         const token = jwt.sign({ id: user._id }, jwtSecret, {
-            expiresIn: '1h',
+            expiresIn: '3h',
         });
         return res.status(201).json({
             token,

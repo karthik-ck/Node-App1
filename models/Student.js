@@ -22,6 +22,17 @@ const StudentSchema = new mongoose.Schema({
     school_id: {
         type: ObjectId,
         required: true
+    },
+    class_id:{
+        type: ObjectId,
+        required: true
+    },
+    section_id:{
+        type: ObjectId,
+        required: true
+    },
+    branch_id:{
+        type: ObjectId,
     }
 }, { timestamps: true })
 
