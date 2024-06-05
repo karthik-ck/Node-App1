@@ -163,6 +163,24 @@ exports.getAttandanceDetails = async (req, res) => {
 
 exports.getStudentAttendance = async (req, res) => {
     try {
+        const filteredDate = req.query.filteredDate || ''
+        const classId = req.query.classId || ''
+        const sectionId = req.query.sectionId || ''
+        const branchId = req.query.branchId || ''
+        const match = {}
+        if (filteredDate) {
+            match.attendanceDate = filteredDate
+        }
+        if (classId) {
+            match.class_id = new mongoose.Types.ObjectId(classId)
+        }
+        if (sectionId) {
+            match.section_id = new mongoose.Types.ObjectId(sectionId)
+        }
+        if (branchId) {
+            match.branch_id = new mongoose.Types.ObjectId(branchId)
+        }
+
         const list = await Student.aggregate([
             {
                 $lookup: {
@@ -202,7 +220,8 @@ exports.getStudentAttendance = async (req, res) => {
             },
             {
                 $addFields: {
-                    attendanceData: '$attendanceDetails.attendanceData'
+                    attendanceData: '$attendanceDetails.attendanceData',
+                    attendanceDate: '$attendanceDetails.attendance_date'
                 }
             },
             {
@@ -217,10 +236,76 @@ exports.getStudentAttendance = async (req, res) => {
                 }
             },
             {
+                $lookup: {
+                    from: 'classes',
+                    localField: 'class_id',
+                    foreignField: '_id',
+                    as: 'className'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$className',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $addFields: {
+                    class: '$className.class_name',
+                    class_id: '$className._id'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'sections',
+                    localField: 'section_id',
+                    foreignField: '_id',
+                    as: 'section'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$section',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $addFields: {
+                    section: '$section.section_name',
+                    section_id: '$section._id'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'branches',
+                    localField: 'branch_id',
+                    foreignField: '_id',
+                    as: 'branch'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$branch',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $addFields: {
+                    branch: '$branch.branch_name',
+                    branch_id: '$branch._id'
+                }
+            },
+            {
+                $match: match
+            },
+            {
                 $project: {
                     name: 1,
                     phone: 1,
-                    attendance: 1
+                    attendance: 1,
+                    class: 1,
+                    section: 1,
+                    branch: 1
                 }
             }
         ])
