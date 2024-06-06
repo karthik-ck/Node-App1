@@ -14,6 +14,7 @@ const customerRoutes = require('./routes/CustomerRoutes')
 const partyRoutes = require('./routes/PartyRoutes')
 const subjectRoutes = require('./routes/SubjectRoutes')
 const attendanceRoutes = require('./routes/AttendanceRoutes')
+const assignStudentRoutes = require('./routes/AssignSubjectRoutes')
 
 dotenv.config();
 
@@ -47,6 +48,7 @@ app.use('/customer',customerRoutes)
 app.use('/party',partyRoutes)
 app.use('/subject',subjectRoutes)
 app.use('/attendance',attendanceRoutes)
+app.use('/assign-subject-student',assignStudentRoutes)
 
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
